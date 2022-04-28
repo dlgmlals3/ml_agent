@@ -4,7 +4,6 @@ using Unity.MLAgents;
 public class GridSettings : MonoBehaviour
 {
     public Camera MainCamera;
-
     public void Awake()
     {
         Academy.Instance.EnvironmentParameters.RegisterCallback("gridSize", f =>

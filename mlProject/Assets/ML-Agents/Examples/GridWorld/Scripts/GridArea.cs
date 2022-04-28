@@ -31,6 +31,7 @@ public class GridArea : MonoBehaviour
     Vector3 m_InitialPosition;
 
     EnvironmentParameters m_ResetParams;
+    public List<int> otherPos = new List<int>();
 
     public void Start()
     {
@@ -52,6 +53,7 @@ public class GridArea : MonoBehaviour
         m_InitialPosition = transform.position;
     }
 
+    // 벽과 장애물 설정
     void SetEnvironment()
     {
         transform.position = m_InitialPosition * (m_ResetParams.GetWithDefault("gridSize", 5f) + 1);
@@ -84,6 +86,8 @@ public class GridArea : MonoBehaviour
         m_AgentCam.transform.localPosition = new Vector3((gridSize - 1) / 2f, gridSize + 1f, (gridSize - 1) / 2f);
     }
 
+    // 에피소드가 시작될때 호출되는 함수
+    // 벽 장애물 에이전트 무작위로 배치
     public void AreaReset()
     {
         var gridSize = (int)m_ResetParams.GetWithDefault("gridSize", 5f);
@@ -101,14 +105,19 @@ public class GridArea : MonoBehaviour
             numbers.Add(Random.Range(0, gridSize * gridSize));
         }
         var numbersA = numbers.ToArray();
-
+        
+        otherPos.Clear();
         for (var i = 0; i < players.Length; i++)
         {
             var x = (numbersA[i]) / gridSize;
-            var y = (numbersA[i]) % gridSize;
+            var z = (numbersA[i]) % gridSize;
             var actorObj = Instantiate(m_Objects[players[i]], transform);
-            actorObj.transform.localPosition = new Vector3(x, -0.25f, y);
+            actorObj.transform.localPosition = new Vector3(x, -0.25f, z);
             actorObjs.Add(actorObj);
+
+            // 타겟2개의 위치정보를 Observation 넣어주기 위해 list에 넣어줌,.
+            otherPos.Add(x);
+            otherPos.Add(z);
         }
 
         var xA = (numbersA[players.Length]) / gridSize;

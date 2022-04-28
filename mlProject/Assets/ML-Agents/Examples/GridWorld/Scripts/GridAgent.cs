@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
@@ -68,19 +69,36 @@ public class GridAgent : Agent
 
     EnvironmentParameters m_ResetParams;
 
+    // 에이전트에 필요한 초기화
     public override void Initialize()
     {
         m_GoalSensor = this.GetComponent<VectorSensorComponent>();
         m_ResetParams = Academy.Instance.EnvironmentParameters;
     }
 
+    // Agent에게 Vector Observation을 전달한다.
     public override void CollectObservations(VectorSensor sensor)
     {
         Array values = Enum.GetValues(typeof(GridGoal));
         int goalNum = (int)CurrentGoal;
+
+        // Agent의 좌표
+        sensor.AddObservation(transform.position.x);
+        sensor.AddObservation(transform.position.z);
+
+        // 각 도형의 대한 좌표
+        List<int> otherPos = area.otherPos;
+        for (int i=0; i<otherPos.Count; i++)
+		{
+            sensor.AddObservation(otherPos[i]);
+		}
+
+        // 목표 지점의 대한 정보를 넘겨줌 1 or 0
         m_GoalSensor.GetSensor().AddOneHotObservation(goalNum, values.Length);
     }
 
+    // masking 된 Action 결과를 Agent에게 전달해 준다.
+    // 벽에 닿았을때 더 움직이지 못하기 위해
     public override void WriteDiscreteActionMask(IDiscreteActionMask actionMask)
     {
         // Mask the necessary actions if selected by the user.
@@ -114,6 +132,7 @@ public class GridAgent : Agent
     }
 
     // to be implemented by the developer
+    // Agent가 결정한 Action을 환경에서 수행한다.
     public override void OnActionReceived(ActionBuffers actionBuffers)
 
     {
@@ -146,8 +165,9 @@ public class GridAgent : Agent
             targetPos, new Vector3(0.3f, 0.3f, 0.3f));
         if (hit.Where(col => col.gameObject.CompareTag("wall")).ToArray().Length == 0)
         {
+            // 벽에 안닿았을때 이동
             transform.position = targetPos;
-
+            
             if (hit.Where(col => col.gameObject.CompareTag("plus")).ToArray().Length == 1)
             {
                 ProvideReward(GridGoal.GreenPlus);
@@ -196,6 +216,7 @@ public class GridAgent : Agent
     }
 
     // to be implemented by the developer
+    // 에피소드 시작할때 호출.
     public override void OnEpisodeBegin()
     {
         area.AreaReset();
